@@ -85,3 +85,32 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message })
   }
 }
+
+export const requestRegistrationOtp = async (req, res) => {
+  try {
+    const { email } = req.body
+    const normalizedEmail = email?.toLowerCase().trim();
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: "Email is required" })
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already in use" })
+    }
+
+    const result = await requestEmailOtp({
+      email: normalizedEmail,
+      purpose: "registration"
+    });
+
+    res.json({
+      message: "Verification code sent to your email", result
+    })
+
+  } catch (err) {
+    console.log("Error requesting registration OTP", err);
+    res.status(500).json({ message: "Server error", error: err.message })
+  }
+}

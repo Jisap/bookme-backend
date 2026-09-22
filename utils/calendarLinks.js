@@ -13,5 +13,5 @@ export const buildCustomerCalenderUrl = ({ business, service, booking }) => {
     details: booking.notes || `Booking with ${business.businessName || business.name}`
   });
 
-
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
 }

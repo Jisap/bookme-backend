@@ -1,10 +1,9 @@
-import { Mongoose } from "mongoose";
-import Service from "../models/Service";
+import Service from "../models/Service.js";
 
 
 export const listServices = async (req, res) => {
   try {
-    const services = (await Service.find({ userId: req.user.Id, isDeleted: { $ne: true } })).toSorted({ createdAt: -1 });
+    const services = await Service.find({ userId: req.user.id, isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     res.json({ services });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message })
@@ -56,6 +55,24 @@ export const updateService = async (req, res) => {
     }
 
     res.json({ message: 'Service updated', service });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const deleteService = async (req, res) => {
+  try {
+    const service = await Service.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id, isDeleted: { $ne: true } },
+      { isDeleted: true, isActive: false },
+      { new: true }
+    );
+
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    res.json({ message: 'Service deleted', service });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

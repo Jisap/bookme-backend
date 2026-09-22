@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { buildCustomerCalenderUrl } from "./calendarLinks";
+import { buildCustomerCalendarUrl } from "./calendarLinks.js";
 
 const getOAuthClient = () => {
   return new google.auth.OAuth2(

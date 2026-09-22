@@ -10,6 +10,7 @@ const normalizedEmail = (email = "") => email.toLocaleLowerCase().trim(); // Ema
 
 const createCode = () => crypto.randomInt(100000, 1000000).toString();    // OTP generator
 
+// Genera un código OTP y lo envía al email del usuario.
 export const requestEmailOtp = async ({ email, purpose }) => {
   const normalizedEmail = normalizedEmail(email);
   if (!normalizedEmail) {
@@ -37,6 +38,7 @@ export const requestEmailOtp = async ({ email, purpose }) => {
   }
 }
 
+// Verifica el código OTP y lo consume si se desea.
 export const verifyEmailOtp = async ({ email, purpose, code, consume = false }) => {
   const normalizedEmail = normalizedEmail(email);
   if (!normalizedEmail || !code) {

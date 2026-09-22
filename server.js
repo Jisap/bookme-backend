@@ -3,6 +3,7 @@ import cors from "cors"
 import "dotenv/config"
 import http from "http"
 import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -18,7 +19,9 @@ connectDB();
 
 app.get("/", (req, res) => {
     res.send("API WORKING")
-})
+});
+
+app.get("/api/auth", authRoutes)
 
 const server = http.createServer(app);
 

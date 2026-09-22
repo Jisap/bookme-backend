@@ -11,7 +11,7 @@ export const minutesToTime = (totalMinutes) => {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}` // Return the formatted time string    
 };
 
-export const isValidTimeRande = (startTime, endTime) => {
+export const isValidTimeRange = (startTime, endTime) => {
     return timeToMinutes(startTime) < timeToMinutes(endTime);                      // Return true if the start time is less than the end time.
 }
 

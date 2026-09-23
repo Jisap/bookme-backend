@@ -1,6 +1,6 @@
-import https from "http"
+import https from "https"
 
-const BREVO_TRANSACTIONAL_EMAIL_URL = "https:/api.brevo.com/v3/smtp/email"
+const BREVO_TRANSACTIONAL_EMAIL_URL = "https://api.brevo.com/v3/smtp/email"
 
 const parseEmailAddress = (value = '') => {
   const match = value.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);

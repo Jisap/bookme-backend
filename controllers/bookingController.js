@@ -1,7 +1,7 @@
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
 import User from '../models/User.js';
-import { buildCustomerCalendarUrl } from '../utils/calendarLink.js';
+import { buildCustomerCalendarUrl } from '../utils/calendarLinks.js';
 import { cancelBookingCalendarEvent, updateBookingCalendarEvent } from '../utils/googleCalendar.js';
 import { sendBookingNotification } from '../utils/bookingNotifications.js';
 import { timesOverlap } from '../utils/overlap.js';

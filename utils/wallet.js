@@ -51,12 +51,13 @@ export const getWalletSummary = async (userId) => {
 
   const totals = rows.reduce((acc, row) => ({ ...acc, [row._id]: row.total }), {}); // Acumulador de transacciones de la billetera
   const withdrawalTotals = withdrawalRows.reduce((acc, row) => ({ ...acc, [row._id]: row.total }), {}); // Acumulador de retiros
-  const earned = withdrawalTotals.booking_payout || 0; // Ganado
+  const earned = totals.booking_payout || 0; // Ganado
   const held = totals.withdrawal_hold || 0; // Retenido
   const processing = totals.withdrawal_processing || 0; // Procesando
-  const reversed = totals.witdhdrawal_reversal || 0; // Revertido
+  const reversed = totals.withdrawal_reversal || 0; // Revertido
   const pendingWithdrawals = (withdrawalTotals.pending || 0) + (withdrawalTotals.processing || 0); // Retiros pendientes
   const paidWithdrawals = withdrawalTotals.paid || 0;
+  const availableBalance = Math.max(0, earned - held + reversed);
 
 
   return {
@@ -64,6 +65,7 @@ export const getWalletSummary = async (userId) => {
     withdrawOrPending: held - reversed,
     pendingWithdrawals,
     paidWithdrawals,
-    availableBalance: Math.max(0, earned - held + reversed),
+    availableBalance,
+    available: availableBalance,
   };
 };

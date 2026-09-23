@@ -1,4 +1,4 @@
-import { timeToMinutes } from "./time";
+import { timeToMinutes } from "./time.js";
 
 // timeOverlap: Chekea si hay un solapamiento en los horarios.
 // 
@@ -9,3 +9,6 @@ export const timeOverlap = (firstStart, firstEnd, secondStart, secondEnd) => {
   // y si el final del primer rango es mayor que el inicio del segundo
   return timeToMinutes(firstStart) < timeToMinutes(secondEnd) && timeToMinutes(firstEnd) > timeToMinutes(secondStart)
 }
+
+// Alias kept for backwards compatibility (bookingController imports timesOverlap).
+export const timesOverlap = timeOverlap;

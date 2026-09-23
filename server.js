@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes)
 app.use("/api/services", serviceRoutes)
 app.use("/api/availability", availabilityRoutes)
-app.use("/api/integration", integrationRoutes)
+app.use("/api/integrations", integrationRoutes)
 
 const server = http.createServer(app);
 

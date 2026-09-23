@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
-const withdrawlSchema = new mongoose.Schema({
+// Esquema usado para los retiros realizados por los proveedores (retiro = withdrawal) 
+const withdrawalSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -38,6 +39,6 @@ const withdrawlSchema = new mongoose.Schema({
     { timestamps: true }
 );
 
-const Withdrawl = mongoose.model("Withdrawl", withdrawlSchema);
+const Withdrawal = mongoose.model("Withdrawal", withdrawalSchema);
 
-export default Withdrawl;
+export default Withdrawal;

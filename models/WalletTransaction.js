@@ -13,14 +13,14 @@ const walletTransactionSchema = new mongoose.Schema(
       ref: "Booking",
       index: true,
     },
-    withdrawlId: {
+    withdrawalId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Withdrawl",
+      ref: "Withdrawal",
       index: true,
     },
     type: {
       type: String,
-      enum: ["booking_payout", "withdrawl_hold", "withdrawl_reversal"],
+      enum: ["booking_payout", "withdrawal_hold", "withdrawal_reversal"],
       required: true
     },
     amount: {
@@ -45,6 +45,6 @@ walletTransactionSchema.index(
   { unique: true, partialFilterExpression: { bookingId: { $exists: true } } }
 );
 
-const WalletTransaction = mongoose.model("walletTransaction", walletTransactionSchema);
+const WalletTransaction = mongoose.model("WalletTransaction", walletTransactionSchema);
 
 export default WalletTransaction;

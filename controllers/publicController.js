@@ -65,6 +65,39 @@ export const getPublicBusiness = async (req, res) => {
   }
 };
 
+export const getPublicSlots = async (req, res) => {
+  try {
+    const { date, serviceId } = req.query;
+
+    if (!date || !serviceId) {
+      return res.status(400).json({ message: "Date and Service ID are required" });
+    }
+
+    const business = await getBusinessBySlug(req.params.slug);
+    if (!business) {
+      return res.status(404).json({ message: "Business not found" });
+    }
+
+    const service = await Service.findOne({
+      _id: serviceId,
+      userId: business._id,
+      isActive: true,
+      isDeleted: { $ne: true },
+    });
+
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    const slots = await generateSlots({ userId: business._id, service, date });
+
+    res.json({ slots });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+}
+
 
 export const verifyPublicBookingOtp = async (req, res) => {
   try {

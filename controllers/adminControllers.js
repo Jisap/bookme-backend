@@ -141,3 +141,160 @@ const getAdminSummary = async () => {
     withdrawalHolds: Math.max(walletWithdrawalHold, bookingWithdrawalHold), // Fondos retenidos o comprometidos
   };
 };
+
+/**
+ * Valida la contraseña del administrador contra el hash encriptado o la variable de entorno.
+ * 
+ * @param {string} password - Contraseña en texto plano ingresada
+ * @returns {Promise<boolean>} true si la contraseña es correcta, false de lo contrario
+ */
+const isAdminPasswordValid = async (password) => {
+  if (process.env.ADMIN_PASSWORD_HASH) {
+    return bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
+  }
+
+  return password === process.env.ADMIN_PASSWORD;
+};
+
+/**
+ * Inicia sesión para el administrador de la plataforma.
+ * Valida credenciales configuradas en las variables de entorno (.env) y genera un token JWT.
+ * 
+ * @param {Object} req - Objeto de solicitud (body: email, password)
+ * @param {Object} res - Objeto de respuesta
+ */
+export const loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const adminEmail = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
+
+    // Comprueba que las credenciales del admin estén configuradas en las variables de entorno
+    if (!adminEmail || (!process.env.ADMIN_PASSWORD && !process.env.ADMIN_PASSWORD_HASH)) {
+      return res.status(503).json({ message: "Admin login is not configured" });
+    }
+
+    // Comprueba que el correo coincida con el del admin
+    if (!email || !password || email.toLowerCase().trim() !== adminEmail) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    // Valida la contraseña mediante hash bcrypt o comparación directa
+    const passwordValid = await isAdminPasswordValid(password);
+    if (!passwordValid) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    res.json({
+      message: "Admin logged in successfully",
+      token: createAdminToken(adminEmail),
+      admin: { email: adminEmail },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+/**
+ * Obtiene todos los datos necesarios para renderizar el panel de administración general.
+ * Consulta en paralelo: usuarios recientes, métricas globales, solicitudes de retiro y reservas pagadas.
+ * 
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} res - Objeto de respuesta de Express
+ */
+export const getAdminDashboard = async (req, res) => {
+  try {
+    const [
+      users,
+      summary,
+      withdrawals,
+      recentBookings,
+    ] = await Promise.all([
+      // Lista de usuarios registrados (últimos 100)
+      User.find().select('name email businessName slug payoutDetails createdAt').sort({ createdAt: -1 }).limit(100),
+      // Resumen estadístico global
+      getAdminSummary(),
+      // Solicitudes de retiro recientes con datos del usuario asociado (últimos 50)
+      Withdrawal.find().populate('userId', 'name email businessName').sort({ createdAt: -1 }).limit(50),
+      // Últimas 10 reservas pagadas
+      Booking.find({ paymentStatus: 'paid' })
+        .populate('userId', 'name email businessName')
+        .populate('serviceId', 'name')
+        .sort({ updatedAt: -1 })
+        .limit(10),
+    ]);
+
+    res.json({
+      summary,
+      users,
+      withdrawals,
+      recentBookings,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * Actualiza el estado de una solicitud de retiro (ej. 'processing', 'paid', 'rejected').
+ * Si la solicitud es rechazada ('rejected'), restituye automáticamente los fondos retenidos
+ * a la billetera del usuario mediante una transacción de tipo 'withdrawal_reversal'.
+ * 
+ * @param {Object} req - Objeto de solicitud (params: id, body: status, adminNote)
+ * @param {Object} res - Objeto de respuesta
+ */
+export const updateWithdrawalStatus = async (req, res) => {
+  try {
+    const { status, adminNote } = req.body;
+    const allowedStatuses = ['pending', 'processing', 'paid', 'rejected'];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid withdrawal status' });
+    }
+
+    const withdrawal = await Withdrawal.findById(req.params.id);
+    if (!withdrawal) {
+      return res.status(404).json({ message: 'Withdrawal not found' });
+    }
+
+    // No se permite modificar retiros que ya alcanzaron un estado final/terminal ('paid' o 'rejected')
+    if (terminalWithdrawalStatuses.includes(withdrawal.status)) {
+      return res.status(400).json({
+        message: `Withdrawal is already ${withdrawal.status} and cannot be changed`,
+      });
+    }
+
+    // Si el retiro es rechazado, revierte la retención y devuelve los fondos a la billetera del usuario
+    if (status === 'rejected' && withdrawal.status !== 'rejected') {
+      const existingReversal = await WalletTransaction.findOne({
+        withdrawalId: withdrawal._id,
+        type: 'withdrawal_reversal',
+      });
+
+      if (!existingReversal) {
+        await WalletTransaction.create({
+          userId: withdrawal.userId,
+          withdrawalId: withdrawal._id,
+          type: 'withdrawal_reversal',
+          amount: withdrawal.amount,
+          status: 'reversed',
+          description: 'Withdrawal rejected and funds returned',
+        });
+      }
+    }
+
+    // Actualiza estado y notas del administrador
+    withdrawal.status = status;
+    withdrawal.adminNote = adminNote || withdrawal.adminNote;
+    await withdrawal.save();
+
+    // Recalcula el resumen global actualizado y popula los datos del usuario
+    const [summary] = await Promise.all([
+      getAdminSummary(),
+      withdrawal.populate('userId', 'name email businessName'),
+    ]);
+
+    res.json({ message: `Withdrawal marked as ${status}`, withdrawal, summary });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

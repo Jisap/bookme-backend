@@ -8,8 +8,8 @@ import { requestEmailOtp, verifyEmailOtp } from "../utils/emailOtp.js";
 import { generateSlots } from "../utils/slotGenerator.js";
 import { getStripe, toStripeAmount } from "../utils/stripe.js"
 import { calculatePlatformSplit } from "../utils/money.js"
-import { timeOverlap } from "../utils/overlap.js";
-import { createBookingPayouttransaction } from "../utils/wallet";
+import { timesOverlap } from "../utils/overlap.js";
+import { createBookingPayoutTransaction } from "../utils/wallet.js";
 
 
 const getBusinessBySlug = async (slug) => {
@@ -28,9 +28,9 @@ const toPublicBusiness = (business) => ({
   googleCalendarConnected: business.googleCalendarConnected
 });
 
-const holdWindowStart = () => Date(Date.now() - 30 * 60 * 1000);
+const holdWindowStart = () => new Date(Date.now() - 30 * 60 * 1000);
 
-const findActiveSlotBooking = ({ userId, date }) => {
+const findActiveSlotBookings = ({ userId, date }) => {
   return Booking.find({
     userId,
     date,
@@ -46,24 +46,24 @@ const findActiveSlotBooking = ({ userId, date }) => {
 
 export const getPublicBusiness = async (req, res) => {
   try {
-    const business = await getBusinessBySlug(req.params.slug)
+    const business = await getBusinessBySlug(req.params.slug);
 
     if (!business) {
-      return res.status(404).json({ message: "Business not found" })
+      return res.status(404).json({ message: "Business not found" });
     }
 
     const services = await Service.find({
       userId: business._id,
       isActive: true,
       isDeleted: { $ne: true }
-    }).sort({ name: 1 })
+    }).sort({ name: 1 });
 
-    res.json({ business: toPublicBusiness(business), services })
+    res.json({ business: toPublicBusiness(business), services });
 
-  } catch {
-    res.satus(500).json({ message: "Server error", error: error.message })
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
 
 
 export const verifyPublicBookingOtp = async (req, res) => {

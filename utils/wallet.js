@@ -4,7 +4,7 @@ import Withdrawal from "../models/Withdrawal.js"; // Importa el modelo de retiro
 
 
 
-export const createBookingPayouttransaction = async ({ booking, description }) => {
+export const createBookingPayoutTransaction = async ({ booking, description }) => {
   if (!booking?.providerPayoutAmount) return null;
 
   try {

@@ -96,6 +96,31 @@ export const getPublicSlots = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
+};
+
+export const requestPublicBookingOtp = async (req, res) => {
+  try {
+    const { customerEmail } = req.body;
+    const normalizedEmail = customerEmail.toLowerCase().trim();
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: "Customer email is required" });
+    }
+
+    const business = await getBusinessBySlug(req.params.slug);
+    if (!business) {
+      return res.status(404).json({ message: "Business not found" });
+    }
+
+    const result = await requestEmailOtp({
+      email: normalizedEmail,
+      purpose: "booking",
+    });
+
+    res.json({ message: "Verificatioon code sent" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 }
 
 

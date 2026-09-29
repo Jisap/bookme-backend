@@ -1,4 +1,4 @@
-import Availability from "../models/Availability.ja";
+import Availability from "../models/Availability.js";
 import Booking from "../models/Booking.js";
 import { timeOverlap } from "./overlap.js";
 import { getDayOfWeek, minutesToTime, timeToMinutes } from "./time.js";
@@ -8,8 +8,8 @@ export const generateSlots = async ({ userId, service, date }) => {
   const dayOfWeek = getDayOfWeek(date);
   const availability = await Availability.findOne({ userId, dayOfWeek });
 
-  if (!availability || availability.slot.length === 0) {
-    return []
+  if (!availability || !availability.slots || availability.slots.length === 0) {
+    return [];
   }
 
   const bookings = await Booking.find({
@@ -33,9 +33,9 @@ export const generateSlots = async ({ userId, service, date }) => {
     while (cursor + service.duration <= end) {
       const startTime = minutesToTime(cursor);
       const endTime = minutesToTime(cursor + service.duration);
-      const hasConflict = bookings.some((booking) => {
+      const hasConflict = bookings.some((booking) => 
         timeOverlap(startTime, endTime, booking.startTime, booking.endTime)
-      })
+      );
 
       if (!hasConflict) {
         slots.push({ startTime, endTime })

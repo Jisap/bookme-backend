@@ -29,7 +29,7 @@ const availabilitySchema = new mongoose.Schema(
       min: 0,
       max: 6,
     },
-    slot: {
+    slots: {
       type: [SlotSchema],
       default: []
     }

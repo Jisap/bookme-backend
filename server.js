@@ -10,7 +10,7 @@ import integrationRoutes from "./routes/integrationRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/paymentRoute.js";
 import publicRoutes from "./routes/publicRoutes.js"
-
+import adminRoutes from "./routes/adminRoutes.js"
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -29,6 +29,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes)
+app.use("/api/admin", adminRoutes)
 app.use("/api/services", serviceRoutes)
 app.use("/api/availability", availabilityRoutes)
 app.use("/api/integrations", integrationRoutes)
@@ -36,6 +37,7 @@ app.use("/api/bookings", bookingRoutes)
 app.use("/api/payments", paymentRoutes)
 app.use("/api/public", publicRoutes)
 app.use("/public", publicRoutes)
+
 
 const server = http.createServer(app);
 

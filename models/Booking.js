@@ -75,7 +75,7 @@ const bookingSchema = new mongoose.Schema(
         },
         currency: {
             type: String,
-            default: 'inr',
+            default: 'usd',
         },
         googleEventId: {
             type: String,

@@ -14,7 +14,9 @@ export const calculatePlatformSplit = (amount) => {
   }
 }
 
-export const formatMinorMoney = (amount, currency = "inr") => {
+export const DEFAULT_CURRENCY = (process.env.DEFAULT_CURRENCY || "usd").toLowerCase();
+
+export const formatMinorMoney = (amount, currency = DEFAULT_CURRENCY) => {
   return new Intl.NumberFormat("en-US", {                 // Formateador de dinero (usa milenrama para separar miles)
     style: "currency",                                    // tipo de formato
     currency: currency.toUpperCase()                        // moneda en mayúsculas

@@ -259,7 +259,7 @@ export const createPublicBooking = async (req, res) => {
     // 4. Calcular importes, comisiones y configuración de Stripe
     const amount = toStripeAmount(service.price);
     const { platformFeeAmount, providerPayoutAmount } = calculatePlatformSplit(amount);
-    const currency = "inr";
+    const currency = (process.env.DEFAULT_CURRENCY || "usd").toLowerCase();
     const stripe = amount > 0 ? getStripe() : null;
 
     if (amount > 0 && !stripe) {

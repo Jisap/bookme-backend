@@ -77,8 +77,8 @@ export const getEmailConfigStatus = () => {
   };
 };
 
-const formatMoney = (amount = 0, currency = 'inr') => {
-  return new Intl.NumberFormat('en-IN', {
+const formatMoney = (amount = 0, currency = (process.env.DEFAULT_CURRENCY || 'usd')) => {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency.toUpperCase(),
   }).format(amount / 100);

@@ -19,14 +19,14 @@ export const requestEmailOtp = async ({ email, purpose }) => {
 
   const code = createCode();                                                               // create code
   const codeHash = await bcrypt.hash(code, 10);                                            // hash code
-  const expireAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);                     // expire time
+  const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);                   // expire time
 
   await EmailOtp.deleteMany({ email: normalized, purpose, consumeAt: null });              // delete old OTPs
   await EmailOtp.create({                                                                  // create new OTP
     email: normalized,
     purpose,
     codeHash,
-    expireAt,
+    expiresAt,
   });
 
   await sendOtpNotification({ email: normalized, code, purpose });                          // send email with OTP 
@@ -49,7 +49,7 @@ export const verifyEmailOtp = async ({ email, purpose, code, consume = false }) 
     email: normalized,
     purpose,
     consumeAt: null,
-    expireAt: { $gt: new Date() }
+    expiresAt: { $gt: new Date() }
   }).sort({ createdAt: -1 });                                                               // sort by creation date
 
   if (!record) {

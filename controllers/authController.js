@@ -124,8 +124,8 @@ export const verifyRegistrationOtp = async (req, res) => {
     const { email, emailOtp } = req.body;                                                           // Obtiene el email y el código OTP del cuerpo de la solicitud
     const normalizedEmail = email?.toLowerCase().trim();                                            // Normaliza el email
 
-    if (!normalizedEmail) {                                                                         // Verifica que el email no este vacío
-      return res.status(400).json({ message: "Email OTP are required" })
+    if (!normalizedEmail || !emailOtp) {                                                            // Verifica que el email y el OTP no estén vacíos
+      return res.status(400).json({ message: "Email and OTP are required" })
     }
 
     const existingUser = await User.findOne({ email: normalizedEmail });                            // Verifica que el email no este registrado
@@ -133,11 +133,13 @@ export const verifyRegistrationOtp = async (req, res) => {
       return res.status(400).json({ message: "Email already in use" })                              // Devuelve error
     }
 
-    const otpResult = await verifyEmailOtp({                                                        // Verifica y consume el emailOtp  
+    // Importante: consume: false para que este endpoint solo valide el código en tiempo real
+    // sin consumirlo. Será el endpoint final (registerUser) quien lo consuma al crear la cuenta.
+    const otpResult = await verifyEmailOtp({
       email: normalizedEmail,
       purpose: "registration",
       code: emailOtp,
-      consume: true,
+      consume: false,
     });
 
     if (!otpResult.verified) {

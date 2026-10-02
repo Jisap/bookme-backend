@@ -12,18 +12,22 @@ export const listServices = async (req, res) => {
 
 export const createServices = async (req, res) => {
   try {
-    const { name, duration, price, description, icon } = req.body;
+    const { name, duration, price, description, icon, isActive } = req.body;
     if (!name || !duration) {
       return res.status(400).json({ message: "Service name and duration are required" })
     }
 
+    const parsedPrice = Number(price);
     const service = await Service.create({
       userId: req.user.id,
       name,
       duration,
-      price: price || 0,
+      price: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : 0,
       description: description || "",
       icon: icon || "C1.png",
+      // Acepta isActive solo si viene como booleano explícito.
+      // Si no viene, se usa el default del modelo (false = Hidden).
+      ...(typeof isActive === "boolean" ? { isActive } : {}),
     })
 
     res.status(201).json({ message: "Service created", service });

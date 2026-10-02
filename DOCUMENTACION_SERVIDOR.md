@@ -149,16 +149,16 @@ npm start   # nodemon server.js → http://localhost:5000
 `userId*` · `dayOfWeek* 0-6 (0=Domingo)` · `slots[{ startTime: "HH:MM", endTime: "HH:MM" }]` · índice único `{userId, dayOfWeek}`.
 
 ### `Booking`
-`userId* (negocio)` · `serviceId*` · `customerName*` · `customerEmail* lowercase` · `customerAvatar (default A1.png)` · `date* "YYYY-MM-DD"` · `startTime* / endTime* "HH:MM"` · `status: pending|pending_payment|confirmed|cancelled|payment_failed (default confirmed)` · `paymentStatus: not_required|pending|paid|failed` · `stripeSessionId (index)` · `amount, platformFeeAmount, providerPayoutAmount (minor units, ej. paise)` · `payoutStatus: not_required|pending|available|withdrawn` · `currency (default inr)` · `googleEventId` · `customerCalendarUrl` · `notes` · `reminderSent` · `isRescheduled` · `rescheduleCount` · `timestamps`.
+`userId* (negocio)` · `serviceId*` · `customerName*` · `customerEmail* lowercase` · `customerAvatar (default A1.png)` · `date* "YYYY-MM-DD"` · `startTime* / endTime* "HH:MM"` · `status: pending|pending_payment|confirmed|cancelled|payment_failed (default confirmed)` · `paymentStatus: not_required|pending|paid|failed` · `stripeSessionId (index)` · `amount, platformFeeAmount, providerPayoutAmount (minor units, ej. cents USD/EUR)` · `payoutStatus: not_required|pending|available|withdrawn` · `currency (default usd, admite eur)` · `googleEventId` · `customerCalendarUrl` · `notes` · `reminderSent` · `isRescheduled` · `rescheduleCount` · `timestamps`.
 
 ### `EmailOtp`
 `email* lowercase index` · `purpose: registration|booking` · `codeHash* (bcrypt, código 6 dígitos)` · `attempts (default 0, máx 5)` · `expireAt* (TTL 10 min, índice expire)` · `consumeAt` · `timestamps`.
 
 ### `WalletTransaction`
-`userId*` · `bookingId?` · `withdrawalId?` · `type*: booking_payout|withdrawal_hold|withdrawal_reversal` · `amount*` · `currency (default inr)` · `status` · índice único parcial `{bookingId, type}`.
+`userId*` · `bookingId?` · `withdrawalId?` · `type*: booking_payout|withdrawal_hold|withdrawal_reversal` · `amount*` · `currency (default usd, admite eur)` · `status` · índice único parcial `{bookingId, type}`.
 
 ### `Withdrawal`
-`userId*` · `amount* (≥1, minor units)` · `currency (default inr)` · `status: pending|processing|paid|rejected (default pending)` · `payoutSnapshot{ accountHolderName, bankName, accountLast4, ifsc, upiId }` · `adminNote` · `timestamps`.
+`userId*` · `amount* (≥1, minor units)` · `currency (default usd, admite eur)` · `status: pending|processing|paid|rejected (default pending)` · `payoutSnapshot{ accountHolderName, bankName, accountLast4, ifsc, upiId }` · `adminNote` · `timestamps`.
 
 ---
 
@@ -254,7 +254,7 @@ Convención errores: `400` validación · `401/403` auth · `404` no encontrado 
 2. `POST /:slug/request-otp` → `POST /:slug/verify-otp` (opcional) → `POST /:slug/book` con `emailOtp` (se consume).
 3. Ventana de bloqueo: `pending_payment` < 30 min también bloquea slots (`holdWindowStart`, `slotGenerator`, `findActiveSlotBookings`).
 4. Gratis (`price=0`): `confirmed` inmediato + Google Calendar + email.
-5. Pago: `pending_payment` + Stripe Checkout (`currency=inr`, `metadata.bookingId`, `success_url={CLIENT_URL}/booking/success?session_id&slug`, `cancel_url=.../booking/cancelled?booking_id&slug`) → frontend llama `GET /booking/status?session_id=` → confirma o marca `payment_failed`. Cancelación manual: `POST /booking/cancel-payment`.
+5. Pago: `pending_payment` + Stripe Checkout (`currency=usd|eur` desde `DEFAULT_CURRENCY`, `metadata.bookingId`, `success_url={CLIENT_URL}/booking/success?session_id&slug`, `cancel_url=.../booking/cancelled?booking_id&slug`) → frontend llama `GET /booking/status?session_id=` → confirma o marca `payment_failed`. Cancelación manual: `POST /booking/cancel-payment`.
 
 ### 8.3 Dinero / Wallet
 - `toStripeAmount(price) = round(price*100)`; `calculatePlatformSplit`: fee 10% → `platformFeeAmount`, resto `providerPayoutAmount`.
@@ -295,7 +295,7 @@ Convención errores: `400` validación · `401/403` auth · `404` no encontrado 
 | Slot ocupado | `409` | `That slot is already booked` / `...no longer available` |
 | Pago no completado | `402` | `Payment was not successful...` |
 | Stripe/Google no configurado | `503` | `Stripe payments are not configured yet` / `Server calendar integration not configured` |
-| Retiro inválido | `400` | `Withdrawal amount must be at least 100 paise` / `...exceeds available balance` / `Add payout details...` |
+| Retiro inválido | `400` | `Withdrawal amount must be at least 100 cents` / `...exceeds available balance` / `Add payout details...` |
 | Retiro terminal | `400` | `Withdrawal is already paid/rejected and cannot be changed` |
 
 ---
@@ -306,12 +306,12 @@ Convención errores: `400` validación · `401/403` auth · `404` no encontrado 
 2. **`adminAuth.js:5`** — `startsWith("Bearer")` sin espacio; acepta `Bearervalido`. Alinear con `auth.js` (`"Bearer "`).
 3. **`money.js:7`** — `Number.isInfinite(amount) ? ... : 0` está invertido (montos finitos → `0`). Debería ser `Number.isFinite`. Impacta `platformFeeAmount/providerPayoutAmount` (hoy siempre 0 salvo `Infinity`).
 4. **`publicController` gratis vs pago** — `amount===0` confirma directo; si `price` es `null/undefined` también cae a gratis. Validar intencionalidad.
-5. **Moneda hardcodeada `inr`** en `Booking`, `Withdrawal`, `WalletTransaction` y Checkout, aunque el negocio usa `timezone UTC-5`. Confirmar moneda objetivo.
+5. **Moneda unificada `usd/eur`** (acordado): `Booking`, `Withdrawal`, `WalletTransaction` usan `default usd`, Checkout usa `DEFAULT_CURRENCY || usd`. No usar `inr`/₹ (corregido).
 6. **`Service.isActive` default `false`** — los servicios recién creados no aparecen en la pública hasta activarlos (`PUT /api/services/:id {isActive:true}`). Documentar en frontend.
 7. **Doble montaje `publicRoutes`** en `/api/public` y `/public` — mantener solo uno para evitar confusión.
 8. **`.env` con secretos** commiteado — rotar credenciales y añadir `.env` a `.gitignore` (verificar que lo esté).
 9. **`handleGoogleCallback`** — typo redirect `missing_refresh_token}` (llave extra) y mezcla `GOOGLE_REDIRECT_URI` vs `CLIENT_REDIRECT_URI` en el caso `!code||!state`.
-10. **`toStripeAmount`** — multiplica por 100 asumiendo precio en unidades; `amount` en BD queda en minor units. Frontend debe enviar `price` en unidades (no paise).
+10. **`toStripeAmount`** — multiplica por 100 asumiendo precio en unidades; `amount` en BD queda en minor units. Frontend debe enviar `price` en unidades (no cents).
 
 ---
 

@@ -247,7 +247,7 @@ const buildBookingMessage = ({ business, service, booking, type, recipientType }
   const appointmentTime = formatDateTime(booking, business.timezone);
   const bookingStatus = String(booking.status || '').replace('_', ' ');
   const paymentStatus = String(booking.paymentStatus || 'not_required').replace('_', ' ');
-  const amount = formatMoney(booking.amount || 0, booking.currency || 'inr');
+  const amount = formatMoney(booking.amount || 0, booking.currency || 'usd');
   const intro = buildIntro({ type, serviceName, recipientType });
   const subject = buildSubject(type, businessName, recipientType);
   const title = recipientType === 'provider' ? 'Booking update' : 'Booking confirmation';

@@ -102,7 +102,7 @@ export const requestWithdrawal = async (req, res) => {
 
         const summary = await getWalletSummary(userId);
         if (!amount || amount < 100) {
-            return res.status(400).json({ message: 'Withdrawal amount must be at least 100 paise' });
+            return res.status(400).json({ message: 'Withdrawal amount must be at least 100 cents' });
         }
 
         if (amount > summary.available) {

@@ -1,7 +1,7 @@
 
 
 const slugify = (value) => {
-    return value
+    return String(value ?? "")
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9\s-]/g, '')
